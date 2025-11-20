@@ -46,13 +46,13 @@
 <div id="container"></div>
 
 <div id="menu">
-    <button onclick="transform(targets.table)">TABLE</button>
-    <button onclick="transform(targets.sphere)">SPHERE</button>
-    <button onclick="transform(targets.helix)">HELIX</button>
-    <button onclick="transform(targets.grid)">GRID</button>
+    <button id="btn-table">TABLE</button>
+    <button id="btn-sphere">SPHERE</button>
+    <button id="btn-helix">HELIX</button>
+    <button id="btn-grid">GRID</button>
 </div>
 
-<!-- Import three.js from CDN -->
+<!-- Importmap -->
 <script type="importmap">
 {
     "imports":{
@@ -104,16 +104,15 @@ function init() {
         scene.add(obj);
         objects.push(obj);
 
-        // table layout
         const tablePos = new THREE.Object3D();
         tablePos.position.x = (i % 5) * 250 - 500;
         tablePos.position.y = Math.floor(i / 5) * -300 + 200;
         targets.table.push(tablePos);
     }
 
-    // sphere layout
     const vec = new THREE.Vector3();
     const l = objects.length;
+
     for (let i = 0; i < l; i++) {
         const phi = Math.acos(-1 + (2 * i) / l);
         const theta = Math.sqrt(l * Math.PI) * phi;
@@ -126,7 +125,6 @@ function init() {
         targets.sphere.push(obj);
     }
 
-    // helix layout
     for (let i = 0; i < l; i++) {
         const theta = i * 0.35;
         const y = -(i * 50) + 300;
@@ -140,6 +138,74 @@ function init() {
         targets.helix.push(obj);
     }
 
-    // grid layout
     for (let i = 0; i < l; i++) {
-        const obj = new THREE.Objec
+        const obj = new THREE.Object3D();
+        obj.position.set(
+            (i % 5) * 250 - 500,
+            (Math.floor(i / 5) % 2) * -300 + 150,
+            Math.floor(i / 10) * 800 - 400
+        );
+        targets.grid.push(obj);
+    }
+
+    renderer = new CSS3DRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById("container").appendChild(renderer.domElement);
+
+    controls = new TrackballControls(camera, renderer.domElement);
+    controls.addEventListener("change", render);
+
+    // ✔ Correct event listeners
+    document.getElementById("btn-table").onclick = () => transform(targets.table);
+    document.getElementById("btn-sphere").onclick = () => transform(targets.sphere);
+    document.getElementById("btn-helix").onclick = () => transform(targets.helix);
+    document.getElementById("btn-grid").onclick = () => transform(targets.grid);
+
+    transform(targets.table);
+    window.addEventListener("resize", onWindowResize);
+}
+
+function transform(target) {
+    TWEEN.removeAll();
+
+    for (let i = 0; i < objects.length; i++) {
+        const obj = objects[i];
+        const t = target[i];
+
+        new TWEEN.Tween(obj.position)
+            .to({ x: t.position.x, y: t.position.y, z: t.position.z }, 1500)
+            .easing(TWEEN.Easing.Exponential.InOut)
+            .start();
+
+        new TWEEN.Tween(obj.rotation)
+            .to({ x: t.rotation.x, y: t.rotation.y, z: t.rotation.z }, 1500)
+            .easing(TWEEN.Easing.Exponential.InOut)
+            .start();
+    }
+
+    new TWEEN.Tween({})
+        .to({}, 1500)
+        .onUpdate(render)
+        .start();
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    render();
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    TWEEN.update();
+    controls.update();
+}
+
+function render() {
+    renderer.render(scene, camera);
+}
+</script>
+
+</body>
+</html>
